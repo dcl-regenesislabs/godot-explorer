@@ -196,6 +196,7 @@ pub struct SceneAvatarUpdates {
     pub avatar_equipped_data: HashMap<SceneEntityId, PbAvatarEquippedData>,
     pub pointer_events_result: HashMap<SceneEntityId, Vec<PbPointerEventsResult>>,
     pub avatar_emote_command: HashMap<SceneEntityId, Vec<PbAvatarEmoteCommand>>,
+    pub created_entities: HashSet<SceneEntityId>,
     pub deleted_entities: HashSet<SceneEntityId>,
 }
 

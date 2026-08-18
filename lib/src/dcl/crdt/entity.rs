@@ -186,4 +186,28 @@ mod test {
             (HashSet::new(), HashSet::from([SceneEntityId::new(32, 10)]))
         );
     }
+
+    #[test]
+    fn test_kill_a_slot_that_was_never_initialized_reports_no_death() {
+        let mut scene_entity_ctx = SceneEntityContainer::new();
+
+        // A slot that was never `try_init`ed is not live, so killing it only bumps the
+        // version: nothing is reported as dead and the scene gets no DELETE_ENTITY.
+        let entity = SceneEntityId::new(32, 0);
+        scene_entity_ctx.kill(entity);
+        assert_eq!(
+            scene_entity_ctx.take_dirty().to_tuple(),
+            (HashSet::new(), HashSet::new())
+        );
+        assert_eq!(scene_entity_ctx.get_entity_stat(32), &(1, false));
+
+        // Initializing the slot first is what makes the death observable.
+        let entity = SceneEntityId::new(32, 1);
+        assert!(scene_entity_ctx.try_init(entity));
+        scene_entity_ctx.kill(entity);
+        assert_eq!(
+            scene_entity_ctx.take_dirty().to_tuple(),
+            (HashSet::new(), HashSet::from([entity]))
+        );
+    }
 }
