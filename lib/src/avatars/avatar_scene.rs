@@ -141,6 +141,24 @@ impl AvatarScene {
 
         self.avatar_entity.insert(alias, entity_id);
 
+        // Push dirty state in all the scenes.
+        // A scene's entity container only learns which avatar entities are live at its first
+        // tick, through `first_sync_crdt_state`. A peer joining after that is never marked
+        // live there, and `SceneEntityContainer::kill` drops the death of a slot that isn't
+        // live, so the scene would never be told the peer left and would keep its
+        // components (and list it in `getPlayersInScene`) forever. `remove_avatar` fans the
+        // departure out to every scene, so the arrival has to be fanned out the same way.
+        {
+            let mut scene_runner = DclGlobal::singleton().bind().scene_runner.clone();
+            let mut scene_runner = scene_runner.bind_mut();
+            for scene in scene_runner.get_all_scenes_mut().values_mut() {
+                scene
+                    .avatar_scene_updates
+                    .created_entities
+                    .insert(entity_id);
+            }
+        }
+
         let mut new_avatar: Gd<DclAvatar> = godot::tools::load::<PackedScene>(
             "res://src/decentraland_components/avatar/avatar.tscn",
         )
